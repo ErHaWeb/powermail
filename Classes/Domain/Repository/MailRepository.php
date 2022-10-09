@@ -7,24 +7,23 @@ use Doctrine\DBAL\DBALException;
 use In2code\Powermail\Domain\Model\Answer;
 use In2code\Powermail\Domain\Model\Form;
 use In2code\Powermail\Domain\Model\Mail;
-use In2code\Powermail\Signal\SignalTrait;
+use In2code\Powermail\Events\MailRepositoryGetVariablesWithMarkersFromMailEvent;
+use In2code\Powermail\Exception\DeprecatedException;
 use In2code\Powermail\Utility\ArrayUtility;
 use In2code\Powermail\Utility\ConfigurationUtility;
 use In2code\Powermail\Utility\DatabaseUtility;
 use In2code\Powermail\Utility\FrontendUtility;
 use In2code\Powermail\Utility\LocalizationUtility;
 use In2code\Powermail\Utility\StringUtility;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException as InvalidQueryExceptionAlias;
 use TYPO3\CMS\Extbase\Persistence\Generic\Query;
 use TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotException;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotReturnException;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 /**
@@ -32,8 +31,6 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
  */
 class MailRepository extends AbstractRepository
 {
-    use SignalTrait;
-
     /**
      * Find all mails in given PID (BE List)
      *
@@ -132,7 +129,6 @@ class MailRepository extends AbstractRepository
      * @param Form $form
      * @param int $pageUid
      * @return QueryResultInterface
-     * @throws Exception
      * @throws InvalidQueryExceptionAlias
      * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws ExtensionConfigurationPathDoesNotExistException
@@ -340,9 +336,6 @@ class MailRepository extends AbstractRepository
      * @param Mail $mail
      * @param bool $htmlSpecialChars
      * @return array
-     * @throws InvalidSlotException
-     * @throws InvalidSlotReturnException
-     * @throws Exception
      */
     public function getVariablesWithMarkersFromMail(Mail $mail, bool $htmlSpecialChars = false): array
     {
@@ -361,9 +354,13 @@ class MailRepository extends AbstractRepository
             $variables = ArrayUtility::htmlspecialcharsOnArray($variables);
         }
 
-        $signalArguments = [&$variables, $mail, $this];
-        $this->signalDispatch(__CLASS__, __FUNCTION__, $signalArguments);
-        return $variables;
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+        /** @var MailRepositoryGetVariablesWithMarkersFromMailEvent $event */
+        $event = $eventDispatcher->dispatch(
+            GeneralUtility::makeInstance(MailRepositoryGetVariablesWithMarkersFromMailEvent::class, $variables, $mail)
+        );
+
+        return $event->getVariables();
     }
 
     /**
@@ -398,6 +395,7 @@ class MailRepository extends AbstractRepository
      * @param string|array $default String as default or cObject array
      * @param string $glue
      * @return string Sender Name
+     * @throws DeprecatedException
      */
     public function getSenderNameFromArguments(Mail $mail, $default = null, string $glue = ' '): string
     {

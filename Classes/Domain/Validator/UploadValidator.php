@@ -3,6 +3,7 @@
 declare(strict_types=1);
 namespace In2code\Powermail\Domain\Validator;
 
+use Exception;
 use In2code\Powermail\Domain\Model\File;
 use In2code\Powermail\Domain\Model\Mail;
 use In2code\Powermail\Domain\Repository\FormRepository;
@@ -10,9 +11,6 @@ use In2code\Powermail\Domain\Repository\MailRepository;
 use In2code\Powermail\Domain\Service\UploadService;
 use In2code\Powermail\Utility\FrontendUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\Exception;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotException;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotReturnException;
 
 /**
  * Class for uploading files and check if they are valid
@@ -24,8 +22,6 @@ class UploadValidator extends AbstractValidator
      *
      * @param Mail $mail
      * @return bool
-     * @throws InvalidSlotException
-     * @throws InvalidSlotReturnException
      * @throws Exception
      */
     public function isValid($mail)

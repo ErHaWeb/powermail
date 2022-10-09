@@ -6,18 +6,16 @@ namespace In2code\Powermail\ViewHelpers\Misc;
 use In2code\Powermail\Domain\Model\Field;
 use In2code\Powermail\Domain\Model\Mail;
 use In2code\Powermail\Domain\Service\ConfigurationService;
-use In2code\Powermail\Signal\SignalTrait;
+use In2code\Powermail\Events\PrefillFieldViewHelperEvent;
 use In2code\Powermail\Utility\ConfigurationUtility;
 use In2code\Powermail\Utility\FrontendUtility;
 use In2code\Powermail\Utility\ObjectUtility;
 use In2code\Powermail\Utility\SessionUtility;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotException;
-use TYPO3\CMS\Extbase\SignalSlot\Exception\InvalidSlotReturnException;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -26,8 +24,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  */
 class PrefillFieldViewHelper extends AbstractViewHelper
 {
-    use SignalTrait;
-
     /**
      * @var ContentObjectRenderer
      */
@@ -64,6 +60,19 @@ class PrefillFieldViewHelper extends AbstractViewHelper
     protected string $marker = '';
 
     /**
+     * @var EventDispatcherInterface
+     */
+    private EventDispatcherInterface $eventDispatcher;
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+    }
+
+    /**
      * @return void
      */
     public function initializeArguments()
@@ -86,11 +95,8 @@ class PrefillFieldViewHelper extends AbstractViewHelper
      *        location
      *
      * @return string|array Prefill field
-     * @throws Exception
      * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws ExtensionConfigurationPathDoesNotExistException
-     * @throws InvalidSlotException
-     * @throws InvalidSlotReturnException
      */
     public function render()
     {
@@ -105,8 +111,18 @@ class PrefillFieldViewHelper extends AbstractViewHelper
         if (!$this->isCachedForm()) {
             $this->buildValue();
         }
-        $this->signalDispatch(__CLASS__, __FUNCTION__, [$field, $mail, $default, $this]);
-        return $this->getValue();
+
+        /** @var PrefillFieldViewHelperEvent $event */
+        $event = $this->eventDispatcher->dispatch(
+            GeneralUtility::makeInstance(
+                PrefillFieldViewHelperEvent::class,
+                $this->getValue(),
+                $field,
+                $mail,
+                $default
+            )
+        );
+        return $event->getValue();
     }
 
     /**

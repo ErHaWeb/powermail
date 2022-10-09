@@ -11,7 +11,6 @@ use In2code\Powermail\Utility\BackendUtility;
 use In2code\Powermail\Utility\DatabaseUtility;
 use TYPO3\CMS\Core\Database\QueryGenerator;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
@@ -110,7 +109,6 @@ class FormRepository extends AbstractRepository
      *
      * @param int $pid start page identifier
      * @return QueryResultInterface
-     * @throws Exception
      * @throws InvalidQueryException
      */
     public function findAllInPidAndRootline(int $pid): QueryResultInterface

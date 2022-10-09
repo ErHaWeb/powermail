@@ -11,7 +11,6 @@ use In2code\Powermail\Utility\DatabaseUtility;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 
@@ -48,7 +47,6 @@ class FieldRepository extends AbstractRepository
      * @param string $marker
      * @param int $formUid
      * @return Field
-     * @throws Exception
      * @throws InvalidQueryException
      * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws ExtensionConfigurationPathDoesNotExistException
@@ -101,6 +99,7 @@ class FieldRepository extends AbstractRepository
      *        tx_powermail_domain_model_field.page = "0"
      *
      * @return array
+     * @throws DBALException
      */
     public function findAllWrongLocalizedFields(): array
     {
@@ -194,7 +193,7 @@ class FieldRepository extends AbstractRepository
      * @param string $marker Field marker
      * @param int $formUid Form UID
      * @return string Field Type
-     * @throws Exception
+     * @throws DBALException
      * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws ExtensionConfigurationPathDoesNotExistException
      * @throws InvalidQueryException
@@ -214,7 +213,6 @@ class FieldRepository extends AbstractRepository
      * @param string $marker Field marker
      * @param int $formUid Form UID
      * @return int Field UID
-     * @throws Exception
      * @throws ExtensionConfigurationExtensionNotConfiguredException
      * @throws ExtensionConfigurationPathDoesNotExistException
      * @throws InvalidQueryException
